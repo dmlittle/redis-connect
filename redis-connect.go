@@ -104,7 +104,11 @@ func printResult(res interface{}, err error, prefix string) {
 	case int64:
 		fmt.Printf("(integer) %d\n", res)
 	case string:
-		fmt.Printf("%s\n", res)
+		if res == "OK" || res == "QUEUED" || res == "PONG" {
+			fmt.Printf("%s\n", res)
+		} else {
+			fmt.Printf("%q\n", res)
+		}
 	case []interface{}:
 		if len(res) == 0 {
 			fmt.Println("(empty list or set)")
