@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-redis/redis"
+	"github.com/mediocregopher/radix.v2/redis"
 	"github.com/peterh/liner"
 )
 
@@ -83,39 +83,39 @@ func processCommand(cmd []string) {
 		sliceCommand[i] = v
 	}
 
-	redisCommand := redis.NewCmd(sliceCommand...)
-	client.Process(redisCommand)
-	res, err := redisCommand.Result()
-	printResult(res, err, "")
+	res := client.Cmd(cmd[0], sliceCommand[1:]...)
+	printResultNew(res, "")
 }
 
-func printResult(res interface{}, err error, prefix string) {
-	if res == nil {
+func printResultNew(res *redis.Resp, prefix string) {
+	if res.IsType(redis.Nil) {
 		fmt.Printf("(nil)\n")
 		return
 	}
 
-	if err != nil {
-		fmt.Printf("(error) %s\n", err.Error())
+	if res.Err != nil {
+		fmt.Printf("(error) %s\n", res.Err.Error())
 		return
 	}
 
-	switch res := res.(type) {
-	case int64:
-		fmt.Printf("(integer) %d\n", res)
-	case string:
-		if res == "OK" || res == "QUEUED" || res == "PONG" {
-			fmt.Printf("%s\n", res)
-		} else {
-			fmt.Printf("%q\n", res)
-		}
-	case []interface{}:
-		if len(res) == 0 {
+	if res.IsType(redis.Int) {
+		i, _ := res.Int()
+		fmt.Printf("(integer) %d\n", i)
+	} else if res.IsType(redis.SimpleStr) {
+		s, _ := res.Str()
+		fmt.Printf("%s\n", s)
+	} else if res.IsType(redis.BulkStr) {
+		s, _ := res.Str()
+		fmt.Printf("%q\n", s)
+	} else {
+		a, _ := res.Array()
+
+		if len(a) == 0 {
 			fmt.Println("(empty list or set)")
 			return
 		}
 
-		i := len(res)
+		i := len(a)
 		idxLen := 0
 		for i != 0 {
 			idxLen = idxLen + 1
@@ -125,7 +125,7 @@ func printResult(res interface{}, err error, prefix string) {
 		_prefix := strings.Repeat(" ", idxLen+2)
 		_prefixfmt := fmt.Sprintf("%%s%%%dd) ", idxLen)
 
-		for i, v := range res {
+		for i, v := range a {
 			var p string
 
 			if i == 0 {
@@ -135,33 +135,31 @@ func printResult(res interface{}, err error, prefix string) {
 			}
 			fmt.Printf(_prefixfmt, p, i+1)
 
-			printResult(v, nil, _prefix)
+			printResultNew(v, _prefix)
 		}
-	default:
-		fmt.Printf("Unknown reply type: %v\n", res)
 	}
 }
 
 func startRedisClient() {
-	opts := &redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", *hostname, *port),
-		Password: *auth,
-		DB:       *dbn,
-	}
+	addr := fmt.Sprintf("%s:%d", *hostname, *port)
 
+	var err error
 	if *secure {
-		opts.TLSConfig = &tls.Config{ServerName: *hostname}
+		conn, _ := tls.Dial("tcp", addr, &tls.Config{ServerName: *hostname})
+		client, err = redis.NewClient(conn)
+	} else {
+		client, err = redis.Dial("tcp", addr)
+	}
+	if err != nil {
+		panic("failed to start client")
 	}
 
-	if *uri != "" {
-		o, err := redis.ParseURL(*uri)
-		if err != nil {
-			panic(err)
+	if *auth != "" {
+		if err = client.Cmd("AUTH", *auth).Err; err != nil {
+			client.Close()
+			os.Exit(1)
 		}
-		opts = o
 	}
-
-	client = redis.NewClient(opts)
 }
 
 func setCompletionHandler() {

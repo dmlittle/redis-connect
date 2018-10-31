@@ -2,35 +2,35 @@
 
 
 [[projects]]
-  name = "github.com/go-redis/redis"
-  packages = [
-    ".",
-    "internal",
-    "internal/consistenthash",
-    "internal/hashtag",
-    "internal/pool",
-    "internal/proto",
-    "internal/singleflight",
-    "internal/util"
-  ]
-  revision = "480db94d33e6088e08d628833b6c0705451d24bb"
-  version = "v6.13.2"
-
-[[projects]]
+  digest = "1:82b912465c1da0668582a7d1117339c278e786c2536b3c3623029a0c7141c2d0"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
-  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
-  version = "v0.0.2"
+  pruneopts = ""
+  revision = "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
+  digest = "1:b3e35d45be93b737f124779eb8d9cea79a278663c20693ba03042fc98df93944"
+  name = "github.com/mediocregopher/radix.v2"
+  packages = ["redis"]
+  pruneopts = ""
+  revision = "94360be262532d465b7e4760c7a67195d3319a87"
+
+[[projects]]
+  digest = "1:4aee2a94909f9d05d53281e22268c629f6eba9ddc179fdbcd6466de5a998e01e"
   name = "github.com/peterh/liner"
   packages = ["."]
-  revision = "8c1271fcf47f341a9e6771872262870e1ad7650c"
+  pruneopts = ""
+  revision = "5a0dfa99e2aa1d433a9642e863da51402e609376"
+  version = "v1.1.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b2dc4dce402537ec21e6c86ceff1b3717d1d7b676324d0c37bba8429fd67a7a8"
+  input-imports = [
+    "github.com/mediocregopher/radix.v2/redis",
+    "github.com/peterh/liner",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
